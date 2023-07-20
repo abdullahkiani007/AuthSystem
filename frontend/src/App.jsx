@@ -7,12 +7,15 @@ import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { resetUser } from "./store/userSlice";
 import { signOut } from "./api/internal";
+import VerifyEmail from "./components/VerifyEmail";
 
 function App() {
   const navigate = useNavigate();
   const auth = useSelector((state) => state.user.auth);
   const [active, setActive] = useState("");
   const dispatch = useDispatch();
+  const location = useLocation().pathname.substring(1);
+  console.log(location);
   console.log("active", active);
 
   const handleSignout = async () => {
@@ -31,7 +34,7 @@ function App() {
   };
   return (
     <>
-      <Navbar />
+      <Navbar location={location} />
 
       <div className=" flex flex-row justify-center mb-5">
         {auth === true ? (
@@ -47,6 +50,8 @@ function App() {
           >
             SignOut
           </motion.button>
+        ) : location === "verify" ? (
+          <></>
         ) : (
           <>
             <motion.button

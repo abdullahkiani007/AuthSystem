@@ -1,8 +1,10 @@
 import Joi from "joi";
 import userModel from "../models/userModel.js";
 import bcrypt from "bcryptjs";
-import JWTservice from "../JWTservice/JWTauth.js";
+import JWTservice from "../services/JWTauth.js";
 import UserDto from "../Dto/userDto.js";
+import generateRandom from "../services/generateCode.js";
+import sendCode from "../services/sendMail.js";
 const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,25}$/;
 
 export const userController = {
@@ -45,6 +47,8 @@ export const userController = {
           return next(error);
         }
         const { name, password, email } = req.body;
+        const code = generateRandom();
+        console.log(code);
         const hashedPassword = await bcrypt.hash(password, 10);
 
         try {
@@ -52,10 +56,17 @@ export const userController = {
             name,
             email,
             password: hashedPassword,
+            code,
           });
           accessToken = JWTservice.signAccessToken({ id: user._id });
           refreshToken = JWTservice.signRefreshToken({ id: user._id });
           JWTservice.storeRefreshToken(refreshToken, user._id);
+
+          const emailResponse = await sendCode(user.email, user.code);
+          if (emailResponse.status !== 200) {
+            return next(emailResponse);
+          }
+          console.log("email response", emailResponse);
         } catch (error) {
           return next(error);
         }
@@ -77,9 +88,10 @@ export const userController = {
 
     const newUser = new UserDto(user);
     console.log(newUser);
+
     res.status(200).json({
       user: newUser,
-      auth: true,
+      auth: false,
     });
   },
 
@@ -109,6 +121,15 @@ export const userController = {
         const comparePass = await bcrypt.compare(password, user.password);
 
         if (comparePass) {
+          if (!user.verified) {
+            const newUser = new UserDto(user);
+            const error = {
+              status: 200,
+              user: newUser,
+              auth: false,
+            };
+            return next(error);
+          }
           accessToken = JWTservice.signAccessToken({ id: user._id });
           refreshToken = JWTservice.signRefreshToken({ id: user._id });
           JWTservice.storeRefreshToken(refreshToken, user._id);
@@ -133,13 +154,13 @@ export const userController = {
     res.cookie("AccessToken", accessToken, {
       maxAge: 300000,
       httpOnly: true,
-      // secure: true,
+      secure: true,
     });
 
     res.cookie("RefreshToken", refreshToken, {
       maxAge: 900000,
       httpOnly: true,
-      // secure: true,
+      secure: true,
     });
 
     const newUser = new UserDto(user);
@@ -158,6 +179,50 @@ export const userController = {
       message: "Logged out Successfully",
       user: null,
       auth: false,
+    });
+  },
+
+  // verify code
+  async verify(req, res, next) {
+    const codeSchema = Joi.object({
+      email: Joi.string().required(),
+      code: Joi.string()
+        .min(4)
+        .max(4)
+        .pattern(/^[1-9]{4}$/),
+    });
+
+    const { error } = codeSchema.validate(req.body);
+    if (error) {
+      return next(error);
+    }
+    const { email, code } = req.body;
+    console.log(email, code);
+    let user;
+    try {
+      user = await userModel.findOne({ email });
+      if (code !== user.code) {
+        const error = {
+          status: 409,
+          message: "Invalid Code",
+        };
+        return next(error);
+      }
+
+      await userModel.updateOne(
+        { email },
+        {
+          verified: true,
+        }
+      );
+    } catch (error) {
+      return next(error);
+    }
+    const newUser = new UserDto(user);
+
+    res.status(200).json({
+      user: newUser,
+      auth: true,
     });
   },
 
@@ -185,13 +250,13 @@ export const userController = {
         res.cookie("AccessToken", accessToken, {
           maxAge: 300000,
           httpOnly: true,
-          // secure: true,
+          secure: true,
         });
 
         res.cookie("RefreshToken", refreshToken, {
           maxAge: 900000,
           httpOnly: true,
-          // secure: true,
+          secure: true,
         });
 
         user = await userModel.findOne({ _id });

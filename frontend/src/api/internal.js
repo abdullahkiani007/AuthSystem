@@ -42,4 +42,16 @@ const signOut = async () => {
   }
   return response;
 };
-export { login, signUp, signOut };
+
+const verify = async (data) => {
+  let response;
+
+  try {
+    response = await api.post("/verify", data);
+  } catch (error) {
+    console.log("Axios error");
+    return error.response.data;
+  }
+  return response;
+};
+export { login, signUp, signOut, verify };

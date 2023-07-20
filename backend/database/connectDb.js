@@ -1,10 +1,11 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const connection = async () => {
   await mongoose
-    .connect(
-      "mongodb+srv://abdullahkiani931:abdullah-auth123@authsystem.oiincud.mongodb.net/?retryWrites=true&w=majority"
-    )
+    .connect(`${process.env.MONGODB_CONNECTION_STRING}`)
     .then(() => {
       console.log("Data base connected");
     })

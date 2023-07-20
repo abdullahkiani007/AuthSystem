@@ -44,7 +44,12 @@ function Login() {
         };
         dispatch(setUser(user));
         console.log(response);
-        navigate("/home");
+        if (user.auth) {
+          console.log("Going Home");
+          navigate("/home");
+        } else {
+          navigate("/verify");
+        }
       } else {
         setError(response.message);
         setLoading(false);

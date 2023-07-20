@@ -1,5 +1,5 @@
 import UserDto from "../Dto/userDto.js";
-import JWTservice from "../JWTservice/JWTauth.js";
+import JWTservice from "../services/JWTauth.js";
 import userModel from "../models/userModel.js";
 
 const auth = async (req, res, next) => {

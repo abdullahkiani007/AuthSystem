@@ -1,6 +1,6 @@
 import express from "express";
-import { userController } from "./controllers/userController.js";
-import auth from "./middleware/auth.js";
+import { userController } from "../controllers/userController.js";
+import auth from "../middleware/auth.js";
 const router = express.Router();
 
 const root = router.get("/", (req, res, next) => {
@@ -16,4 +16,5 @@ const signOut = router.get("/signout", auth, userController.signOut);
 
 const refresh = router.get("/refresh", userController.refresh);
 
-export const routes = { createUser, loginUser, signOut, refresh, root };
+const verify = router.post("/verify", userController.verify);
+export const routes = { createUser, loginUser, signOut, refresh, root, verify };

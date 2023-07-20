@@ -44,7 +44,7 @@ function Signup() {
           auth: response.auth,
         };
         dispatch(setUser(user));
-        navigate("/home");
+        navigate("/verify");
       } else {
         setError(response.message);
         setLoading(false);

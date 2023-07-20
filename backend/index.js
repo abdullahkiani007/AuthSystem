@@ -1,11 +1,14 @@
 import express from "express";
-import { routes } from "./routes.js";
+import { routes } from "./routes/routes.js";
 import { errorhandling } from "./middleware/errors.js";
 import connection from "./database/connectDb.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-
+import dotenv from "dotenv";
 const app = express();
+
+const PORT = process.env.PORT;
+
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -22,9 +25,10 @@ app.use(routes.createUser);
 app.use(routes.loginUser);
 app.use(routes.signOut);
 app.use(routes.refresh);
+app.use(routes.verify);
 app.use(errorhandling);
 
-app.listen(5000, () => {
+app.listen(PORT || 5000, () => {
   console.log("Server started at port 5000");
   connection();
 });
